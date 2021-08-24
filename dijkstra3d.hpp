@@ -40,6 +40,14 @@ inline float* fill(float *arr, const float value, const size_t size) {
   return arr;
 }
 
+inline uint32_t* fill_uint32(uint32_t *arr, const uint32_t value, const size_t size) {
+  // TODO: refactor as one templated function with `fill`
+  for (size_t i = 0; i < size; i++) {
+    arr[i] = value;
+  }
+  return arr;
+}
+
 void connectivity_check(int connectivity) {
   if (connectivity != 6 && connectivity != 18 && connectivity != 26) {
     throw std::runtime_error("Only 6, 18, and 26 connectivities are supported.");
@@ -57,6 +65,100 @@ inline std::vector<OUT> query_shortest_path(const OUT* parents, const OUT target
   path.push_back(loc);
 
   return path;
+}
+
+
+inline uint32_t compute_connectivity_relationship(
+  const int x1, const int y1, const int z1,
+  const int x2, const int y2, const int z2,
+  const int connectivity = 26) {
+  // Point 1: Reference point (for which relationship is computed)
+  // Point 2: Query point
+
+  const int xdiff = x2 - x1;
+  const int ydiff = y2 - y1;
+  const int zdiff = z2 - z1;
+
+  uint32_t connectivity_bits = 0;
+
+  // 6-hood
+  if (ydiff == 0 && zdiff == 0) {
+    if (xdiff == 1) {
+        connectivity_bits = 0b000001;
+    } else if (xdiff == -1) {
+        connectivity_bits = 0b000010;
+    }
+  } else if (xdiff == 0 && zdiff == 0) {
+    if (ydiff == 1) {
+        connectivity_bits = 0b000100;
+    } else if (ydiff == -1) {
+        connectivity_bits = 0b001000;
+    }
+  } else if (xdiff == 0 && ydiff == 0) {
+      if (zdiff == 1) {
+        connectivity_bits = 0b010000;
+    } else if (zdiff == -1) {
+        connectivity_bits = 0b100000;
+    }
+  }
+
+  // 18-hood
+  if (connectivity > 6) {
+    if (zdiff == 0) {
+      if (xdiff == 1 && ydiff == 1) {
+        connectivity_bits = 0b000000000001000000;
+      } else if (xdiff == -1 && ydiff == 1) {
+        connectivity_bits = 0b000000000010000000;
+      } else if (xdiff == 1 && ydiff == -1) {
+        connectivity_bits = 0b000000000100000000;
+      } else if (xdiff == -1 && ydiff == -1) {
+        connectivity_bits = 0b000000001000000000;
+      }
+    } else if (ydiff == 0) {
+      if (xdiff == 1 && zdiff == 1) {
+        connectivity_bits = 0b000000010000000000;
+      } else if (xdiff == -1 && zdiff == 1) {
+        connectivity_bits = 0b000000100000000000;
+      } else if (xdiff == 1 && zdiff == -1) {
+        connectivity_bits = 0b000100000000000000;
+      } else if (xdiff == -1 && zdiff == -1) {
+        connectivity_bits = 0b001000000000000000;
+      }
+    } else if (xdiff == 0 ) {
+      if (ydiff == 1 && zdiff == 1) {
+        connectivity_bits = 0b000001000000000000;
+      } else if (ydiff == -1 && zdiff == 1) {
+        connectivity_bits = 0b000010000000000000;
+      } else if (ydiff == 1 && zdiff == -1) {
+        connectivity_bits = 0b010000000000000000;
+      } else if (ydiff == -1 && zdiff == -1) {
+        connectivity_bits = 0b100000000000000000;
+      }
+    }
+  }
+
+  // 26-hood
+  if (connectivity > 18) {
+    if (xdiff == 1 && ydiff == 1 && zdiff == 1) {
+      connectivity_bits = 0b00000001000000000000000000;
+    } else if (xdiff == -1 && ydiff == 1 && zdiff == 1) {
+      connectivity_bits = 0b00000010000000000000000000;
+    } else if (xdiff == 1 && ydiff == -1 && zdiff == 1) {
+      connectivity_bits = 0b00000100000000000000000000;
+    } else if (xdiff == -1 && ydiff == -1 && zdiff == 1) {
+    connectivity_bits = 0b00001000000000000000000000;
+    } else if (xdiff == 1 && ydiff == 1 && zdiff == -1) {
+      connectivity_bits = 0b00010000000000000000000000;
+    } else if (xdiff == -1 && ydiff == 1 && zdiff == -1) {
+      connectivity_bits = 0b00100000000000000000000000;
+    } else if (xdiff == 1 && ydiff == -1 && zdiff == -1) {
+      connectivity_bits = 0b01000000000000000000000000;
+    } else if (xdiff == -1 && ydiff == -1 && zdiff == -1) {
+      connectivity_bits = 0b10000000000000000000000000;
+    }
+  }
+
+  return connectivity_bits;
 }
 
 inline void compute_neighborhood_helper(
@@ -715,11 +817,12 @@ std::vector<OUT> dijkstra2d(
 
 template <typename T, typename OUT = uint32_t>
 OUT* parental_field3d(
-    T* field, 
+    T* field,
     const size_t sx, const size_t sy, const size_t sz, 
     const size_t source, OUT* parents = NULL,
     const int connectivity = 26,
-    const uint32_t* voxel_connectivity_graph = NULL
+    const uint32_t* voxel_connectivity_graph = NULL,
+    uint32_t* children = NULL
   ) {
 
   connectivity_check(connectivity);
@@ -743,6 +846,10 @@ OUT* parental_field3d(
   fill(dist, +INFINITY, voxels);
   dist[source] = -0;
 
+  if (children != NULL) {
+    fill_uint32(children, 0, voxels);
+  }
+
   int neighborhood[NHOOD_SIZE];
 
   std::priority_queue<HeapNode<OUT>, std::vector<HeapNode<OUT>>, HeapNodeCompare<OUT>> queue;
@@ -764,6 +871,9 @@ OUT* parental_field3d(
 
     DIJKSTRA_3D_PREFETCH_26WAY(field, loc)
     DIJKSTRA_3D_PREFETCH_26WAY(dist, loc)
+    if (children != NULL) {
+        DIJKSTRA_3D_PREFETCH_26WAY(children, loc)
+    }
 
     if (power_of_two) {
       z = loc >> (xshift + yshift);
@@ -797,6 +907,17 @@ OUT* parental_field3d(
     }
 
     dist[loc] *= -1;
+
+    // Visited nodes are never changed, the shortest path to them is fixed
+    // Only now is it known that this is actually a child of its parent
+    if (children != NULL && parents[loc] != 0) {
+        size_t parent_loc = parents[loc] - 1;
+        size_t x_parent, y_parent, z_parent;
+        z_parent = parent_loc / fast_sxy;
+        y_parent = (parent_loc - (z_parent * sxy)) / fast_sx;
+        x_parent = parent_loc - sx * (y_parent + z_parent * sy);
+        children[parent_loc] |= compute_connectivity_relationship(x_parent, y_parent, z_parent, x, y, z, connectivity);
+    }
   }
 
   delete [] dist;

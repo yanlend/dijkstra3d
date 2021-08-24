@@ -1,4 +1,4 @@
-import pytest 
+import pytest
 
 from math import sqrt
 
@@ -21,15 +21,15 @@ def test_dijkstra2d_10x10_26(dtype, bidirectional, connectivity, compass):
   values = np.ones((10,10,1), dtype=dtype)
 
   path = dijkstra3d.dijkstra(
-    values, (1,1,0), (1,1,0), 
+    values, (1,1,0), (1,1,0),
     bidirectional=bidirectional, connectivity=connectivity,
     compass=compass
   )
   assert len(path) == 1
   assert np.all(path == np.array([ [1,1,0] ]))
-  
+
   path = dijkstra3d.dijkstra(
-    values, (0,0,0), (3,0,0), 
+    values, (0,0,0), (3,0,0),
     bidirectional=bidirectional, connectivity=connectivity,
     compass=compass
   )
@@ -44,21 +44,21 @@ def test_dijkstra2d_10x10_26(dtype, bidirectional, connectivity, compass):
     [0,0,0],
     [1,1,0],
     [2,0,0],
-    [3,0,0],    
+    [3,0,0],
   ])) or np.all(path == np.array([
     [0,0,0],
     [1,0,0],
     [2,1,0],
-    [3,0,0],    
+    [3,0,0],
   ])) or np.all(path == np.array([
     [0,0,0],
     [1,0,0],
     [2,0,0],
-    [3,0,0],    
-  ])) 
+    [3,0,0],
+  ]))
 
   path = dijkstra3d.dijkstra(
-    values, (0,0,0), (5,5,0), 
+    values, (0,0,0), (5,5,0),
     bidirectional=bidirectional, connectivity=connectivity,
     compass=compass
   )
@@ -74,11 +74,11 @@ def test_dijkstra2d_10x10_26(dtype, bidirectional, connectivity, compass):
   ]))
 
   path = dijkstra3d.dijkstra(
-    values, (0,0,0), (9,9,0), 
+    values, (0,0,0), (9,9,0),
     bidirectional=bidirectional, connectivity=connectivity,
     compass=compass
   )
-  
+
   assert len(path) == 10
   assert np.all(path == np.array([
     [0,0,0],
@@ -112,7 +112,7 @@ def test_dijkstra2d_10x10_26(dtype, bidirectional, connectivity, compass):
     [5,5,0],
   ]))
 
-# There are many more equal distance paths 
+# There are many more equal distance paths
 # for 6 connected... so we have to be less specific.
 @pytest.mark.parametrize("dtype", TEST_TYPES)
 @pytest.mark.parametrize("bidirectional", [ False, True ])
@@ -121,19 +121,19 @@ def test_dijkstra2d_10x10_6(dtype, bidirectional, compass):
   values = np.ones((10,10,1), dtype=dtype)
 
   path = dijkstra3d.dijkstra(
-    values, (1,1,0), (1,1,0), 
+    values, (1,1,0), (1,1,0),
     bidirectional=bidirectional, connectivity=6,
     compass=compass
   )
   assert len(path) == 1
   assert np.all(path == np.array([ [1,1,0] ]))
-  
+
   path = dijkstra3d.dijkstra(
-    values, (0,0,0), (3,0,0), 
+    values, (0,0,0), (3,0,0),
     bidirectional=bidirectional, connectivity=6,
     compass=compass
   )
-  
+
   assert len(path) == 4
   assert np.all(path == np.array([
     [0,0,0],
@@ -147,9 +147,9 @@ def test_dijkstra2d_10x10_6(dtype, bidirectional, compass):
 @pytest.mark.parametrize("compass", [ False, True ])
 def test_dijkstra2d_10x10_off_origin(bidirectional, dtype, compass):
   values = np.ones((10,10,1), dtype=dtype)
-  
+
   path = dijkstra3d.dijkstra(
-    values, (2,0,0), (3,0,0), 
+    values, (2,0,0), (3,0,0),
     bidirectional=bidirectional, compass=compass
   )
 
@@ -160,7 +160,7 @@ def test_dijkstra2d_10x10_off_origin(bidirectional, dtype, compass):
   ]))
 
   path = dijkstra3d.dijkstra(
-    values, (2,1,0), (3,0,0), 
+    values, (2,1,0), (3,0,0),
     bidirectional=bidirectional, compass=compass
   )
 
@@ -171,7 +171,7 @@ def test_dijkstra2d_10x10_off_origin(bidirectional, dtype, compass):
   ]))
 
   path = dijkstra3d.dijkstra(
-    values, (9,9,0), (5,5,0), 
+    values, (9,9,0), (5,5,0),
     bidirectional=bidirectional, compass=compass
   )
 
@@ -191,7 +191,7 @@ def test_dijkstra3d_3x3x3_26(bidirectional, dtype, compass):
   values = np.ones((3,3,3), dtype=dtype)
 
   path = dijkstra3d.dijkstra(
-    values, (1,1,1), (1,1,1), 
+    values, (1,1,1), (1,1,1),
     bidirectional=bidirectional, connectivity=26,
     compass=compass
   )
@@ -199,7 +199,7 @@ def test_dijkstra3d_3x3x3_26(bidirectional, dtype, compass):
   assert np.all(path == np.array([ [1,1,1] ]))
 
   path = dijkstra3d.dijkstra(
-    values, (0,0,0), (2,2,2), 
+    values, (0,0,0), (2,2,2),
     bidirectional=bidirectional, connectivity=26
   )
 
@@ -210,7 +210,7 @@ def test_dijkstra3d_3x3x3_26(bidirectional, dtype, compass):
   ]))
 
   path = dijkstra3d.dijkstra(
-    values, (2,2,2), (0,0,0), 
+    values, (2,2,2), (0,0,0),
     bidirectional=bidirectional, connectivity=26,
     compass=compass
   )
@@ -227,7 +227,7 @@ def test_dijkstra3d_3x3x3_18(bidirectional, dtype, compass):
   values = np.ones((3,3,3), dtype=dtype)
 
   path = dijkstra3d.dijkstra(
-    values, (1,1,1), (1,1,1), 
+    values, (1,1,1), (1,1,1),
     bidirectional=bidirectional, connectivity=18,
     compass=compass
   )
@@ -235,7 +235,7 @@ def test_dijkstra3d_3x3x3_18(bidirectional, dtype, compass):
   assert np.all(path == np.array([ [1,1,1] ]))
 
   path = dijkstra3d.dijkstra(
-    values, (0,0,0), (2,2,2), 
+    values, (0,0,0), (2,2,2),
     bidirectional=bidirectional, connectivity=18,
     compass=compass
   )
@@ -262,7 +262,7 @@ def test_dijkstra3d_3x3x3_18(bidirectional, dtype, compass):
   ]))
 
   path = dijkstra3d.dijkstra(
-    values, (2,2,2), (0,0,0), 
+    values, (2,2,2), (0,0,0),
     bidirectional=bidirectional, connectivity=18,
     compass=compass
   )
@@ -305,7 +305,7 @@ def test_dijkstra3d_3x3x3_6(bidirectional, dtype, compass):
   values = np.ones((3,3,3), dtype=dtype)
 
   path = dijkstra3d.dijkstra(
-    values, (1,1,1), (1,1,1), 
+    values, (1,1,1), (1,1,1),
     bidirectional=bidirectional, connectivity=6,
     compass=compass
   )
@@ -313,7 +313,7 @@ def test_dijkstra3d_3x3x3_6(bidirectional, dtype, compass):
   assert np.all(path == np.array([ [1,1,1] ]))
 
   path = dijkstra3d.dijkstra(
-    values, (0,0,0), (2,2,2), 
+    values, (0,0,0), (2,2,2),
     bidirectional=bidirectional, connectivity=6,
     compass=compass
   )
@@ -322,7 +322,7 @@ def test_dijkstra3d_3x3x3_6(bidirectional, dtype, compass):
   assert tuple(path[-1]) == (2,2,2)
 
   path = dijkstra3d.dijkstra(
-    values, (2,2,2), (0,0,0), 
+    values, (2,2,2), (0,0,0),
     bidirectional=bidirectional, connectivity=6,
     compass=compass
   )
@@ -359,7 +359,7 @@ def test_bidirectional():
     [4,2],
     [5,3],
     [5,4], # critical
-    [6,5], 
+    [6,5],
     [5,6],
     [6,7],
     [7,8]
@@ -391,8 +391,8 @@ def test_bidirectional():
     [4,0],
     [4,1],
     # [4,2],
-    [5,2], 
-    [6,2], 
+    [5,2],
+    [6,2],
     [7,2],
     # [8,2],
     [8,3],
@@ -450,7 +450,7 @@ def test_dijkstra_2d_loop(bidirectional, compass):
 @pytest.mark.parametrize("dtype", TEST_TYPES)
 def test_distance_field_2d(dtype):
   values = np.ones((5,5), dtype=dtype)
-  
+
   field = dijkstra3d.distance_field(values, (0,0))
 
   assert np.all(field == np.array([
@@ -667,13 +667,13 @@ def test_euclidean_distance_field_2d(free_space_radius):
      [1,        1.4142135 , 2.4142137, 3.4142137 , 4.4142137],
      [2,        2.4142137 , 2.828427 , 3.828427  , 4.8284273],
      [3,        3.4142137 , 3.828427 , 4.2426405 , 5.2426405],
-     [4,        4.4142137 , 4.8284273, 5.2426405 , 5.656854 ]], 
+     [4,        4.4142137 , 4.8284273, 5.2426405 , 5.656854 ]],
   dtype=np.float32)
 
   field = dijkstra3d.euclidean_distance_field(
     values, (0,0,0), (1,1,1), free_space_radius=free_space_radius
   )
-  assert np.all(np.abs(field - answer) < 0.00001) 
+  assert np.all(np.abs(field - answer) < 0.00001)
 
   answer = np.array([
     [
@@ -688,7 +688,7 @@ def test_euclidean_distance_field_2d(free_space_radius):
 
   values = np.ones((2, 2, 2), dtype=bool)
   field = dijkstra3d.euclidean_distance_field(values, (0,0,0), (1,1,1), free_space_radius=free_space_radius)
-  assert np.all(np.abs(field - answer) < 0.00001)   
+  assert np.all(np.abs(field - answer) < 0.00001)
 
   values = np.ones((2, 2, 2), dtype=bool)
   field = dijkstra3d.euclidean_distance_field(values, (1,1,1), (1,1,1), free_space_radius=free_space_radius)
@@ -702,9 +702,9 @@ def test_euclidean_distance_field_2d(free_space_radius):
       [sq2,   1],
       [1, 0],
     ]
-  ], dtype=np.float32)  
+  ], dtype=np.float32)
 
-  assert np.all(np.abs(field - answer) < 0.00001)   
+  assert np.all(np.abs(field - answer) < 0.00001)
 
   # Multi-source
   values = np.ones((4,4), dtype=bool)
@@ -767,7 +767,7 @@ def test_dijkstra_parental(dtype, compass):
   values = np.ones((10,10), dtype=dtype, order='F')
   parents = dijkstra3d.parental_field(values, (0,0))
   path = dijkstra3d.path_from_parents(parents, (3,0))
-  
+
   assert len(path) == 4
   assert np.all(path == np.array([
     [0,0],
@@ -777,7 +777,7 @@ def test_dijkstra_parental(dtype, compass):
   ]))
 
   values = np.ones((10,10,1), dtype=dtype, order='F')
-  
+
   parents = dijkstra3d.parental_field(values, (0,0,0))
   path = dijkstra3d.path_from_parents(parents, (3,0,0))
 
@@ -852,6 +852,7 @@ def test_dijkstra_parental(dtype, compass):
     if not compass:
       assert np.all(path == path_orig)
 
+
 def test_voxel_connectivity_graph():
   from PIL import Image
   import cc3d
@@ -875,21 +876,21 @@ def test_voxel_connectivity_graph():
 
 @pytest.mark.parametrize('bidirectional', (True, False))
 @pytest.mark.parametrize('compass', (True, False))
-def test_impossible_target_2d_6(bidirectional, compass):  
+def test_impossible_target_2d_6(bidirectional, compass):
   img = np.ones((100, 100), dtype=np.uint8, order="F")
 
   def dijk(src, target, graph):
     return dijkstra3d.dijkstra(
-      img, src, target, 
-      connectivity=6, voxel_graph=graph, 
+      img, src, target,
+      connectivity=6, voxel_graph=graph,
       bidirectional=bidirectional, compass=compass
-    )  
+    )
 
   path = dijk((0,0), (99,99), None)
   assert len(path) > 0
 
   mkgraph = lambda: np.zeros(img.shape, dtype=np.uint32, order="F") + 0b1111
- 
+
   graph = mkgraph()
   path = dijk((0,0), (99,99), graph)
   assert len(path) > 0
@@ -913,6 +914,95 @@ def test_impossible_target_2d_6(bidirectional, compass):
   assert len(path) == 0
 
   path = dijk((99,99), (0,0), graph)
-  assert len(path) == 0  
+  assert len(path) == 0
 
 
+@pytest.mark.parametrize("dtype", TEST_TYPES)
+@pytest.mark.parametrize("compass", [False, True])
+def test_dijkstra_children_2d(dtype, compass):
+  values = np.ones((10, 15), dtype=dtype, order='F')
+  children = np.ones(values.shape, dtype=np.uint32, order='F')
+  parents = dijkstra3d.parental_field(values, (0, 0), connectivity=4, children=children)
+
+  values_shape = *values.shape, 1
+  for x in range(values.shape[0]):
+    for y in range(values.shape[1]):
+      if parents[x,y] == 0:
+        continue
+      parent_loc = parents[x,y] - 1
+      parent_idx = np.unravel_index(parent_loc, values.shape, order="F")
+      parent_idx = *parent_idx, 0
+      children_list = dijkstra3d.compute_neighbors(*parent_idx, *values_shape, voxel_graph=children).squeeze()
+      child_loc = np.ravel_multi_index((x, y), values.shape, order="F")
+      assert child_loc in parent_loc + children_list
+
+
+@pytest.mark.parametrize("dtype", TEST_TYPES)
+@pytest.mark.parametrize("compass", [False, True])
+def test_dijkstra_children_3d(dtype, compass):
+  values = np.ones((17, 10, 1), dtype=dtype, order='F')
+  children = np.ones(values.shape, dtype=np.uint32, order='F')
+  parents = dijkstra3d.parental_field(values, (0, 0, 0), children=children)
+
+  for x in range(values.shape[0]):
+    for y in range(values.shape[1]):
+      for z in range(values.shape[2]):
+        if parents[x,y,z] == 0:
+          continue
+        parent_loc = parents[x,y,z] - 1
+        parent_idx = np.unravel_index(parent_loc, values.shape, order="F")
+        children_list = dijkstra3d.compute_neighbors(*parent_idx, *values.shape, voxel_graph=children).squeeze()
+        child_loc = np.ravel_multi_index((x, y, z), values.shape, order="F")
+        assert child_loc in parent_loc + children_list
+
+
+def test_compute_connectivity():
+  # outside of hood
+  assert dijkstra3d.compute_connectivity(1, 2, 3, -1, 2, 3) == 0
+  assert dijkstra3d.compute_connectivity(1, 0, 3, 1, 2, 3) == 0
+  assert dijkstra3d.compute_connectivity(1, 2, 30000, 1, 2, 3) == 0
+
+  # 6-hood
+  assert dijkstra3d.compute_connectivity(1, 2, 3, 1, 2, 3) == 0
+  assert dijkstra3d.compute_connectivity(0, 2, 3, 1, 2, 3) == 1
+  assert dijkstra3d.compute_connectivity(-1, -2, -3, 0, -2, -3) == 1
+  assert dijkstra3d.compute_connectivity(1, 2, 3, 0, 2, 3) == 2
+  assert dijkstra3d.compute_connectivity(1, 2, 3, 1, 3, 3) == 4
+  assert dijkstra3d.compute_connectivity(1, 2, 3, 1, 1, 3) == 2**3
+  assert dijkstra3d.compute_connectivity(1, 2, 3, 1, 2, 4) == 2**4
+  assert dijkstra3d.compute_connectivity(1, 2, 3, 1, 2, 2) == 2**5
+
+  # 16-hood
+  assert dijkstra3d.compute_connectivity(1, 2, 3, 2, 3, 3) == 2 ** 6
+  assert dijkstra3d.compute_connectivity(1, 2, 3, 0, 3, 3) == 2 ** 7
+  assert dijkstra3d.compute_connectivity(1, 2, 3, 2, 1, 3) == 2 ** 8
+  assert dijkstra3d.compute_connectivity(1, 2, 3, 0, 1, 3) == 2 ** 9
+  assert dijkstra3d.compute_connectivity(1, 2, 3, 2, 2, 4) == 2 ** 10
+  assert dijkstra3d.compute_connectivity(1, 2, 3, 0, 2, 4) == 2 ** 11
+  assert dijkstra3d.compute_connectivity(1, 2, 3, 1, 3, 4) == 2 ** 12
+  assert dijkstra3d.compute_connectivity(1, 2, 3, 1, 1, 4) == 2 ** 13
+  assert dijkstra3d.compute_connectivity(1, 2, 3, 2, 2, 2) == 2 ** 14
+  assert dijkstra3d.compute_connectivity(1, 2, 3, 0, 2, 2) == 2 ** 15
+  assert dijkstra3d.compute_connectivity(1, 2, 3, 1, 3, 2) == 2 ** 16
+  assert dijkstra3d.compute_connectivity(1, 2, 3, 1, 1, 2) == 2 ** 17
+
+  # 26-hood
+  assert dijkstra3d.compute_connectivity(1, 2, 3, 2, 3, 4) == 2 ** 18
+  assert dijkstra3d.compute_connectivity(1, 2, 3, 0, 3, 4) == 2 ** 19
+  assert dijkstra3d.compute_connectivity(1, 2, 3, 2, 1, 4) == 2 ** 20
+  assert dijkstra3d.compute_connectivity(1, 2, 3, 0, 1, 4) == 2 ** 21
+  assert dijkstra3d.compute_connectivity(1, 2, 3, 2, 3, 2) == 2 ** 22
+  assert dijkstra3d.compute_connectivity(1, 2, 3, 0, 3, 2) == 2 ** 23
+  assert dijkstra3d.compute_connectivity(1, 2, 3, 2, 1, 2) == 2 ** 24
+  assert dijkstra3d.compute_connectivity(1, 2, 3, 0, 1, 2) == 2 ** 25
+
+  # Changes in connectivity
+  assert dijkstra3d.compute_connectivity(-4, -5, 6, -4, -6, 7) == 2**13
+  assert dijkstra3d.compute_connectivity(-4, -5, 6, -4, -6, 7, connectivity=6) == 0
+  assert dijkstra3d.compute_connectivity(-4, -5, 6, -4, -6, 7, connectivity=18) == 2**13
+  assert dijkstra3d.compute_connectivity(-4, -5, 6, -4, -6, 7, connectivity=26) == 2**13
+
+  assert dijkstra3d.compute_connectivity(4, 5, 6, 5, 6, 7) == 2**18
+  assert dijkstra3d.compute_connectivity(4, 5, 6, 5, 6, 7, connectivity=6) == 0
+  assert dijkstra3d.compute_connectivity(4, 5, 6, 5, 6, 7, connectivity=18) == 0
+  assert dijkstra3d.compute_connectivity(4, 5, 6, 5, 6, 7, connectivity=26) == 2**18

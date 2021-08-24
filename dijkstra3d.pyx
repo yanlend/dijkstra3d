@@ -76,7 +76,7 @@ cdef extern from "dijkstra3d.hpp" namespace "dijkstra":
     T* field, 
     size_t sx, size_t sy, size_t sz, 
     size_t source, OUT* parents,
-    int connectivity, uint32_t* voxel_graph
+    int connectivity, uint32_t* voxel_graph, uint32_t* children
   )
   cdef float* euclidean_distance_field3d(
     uint8_t* field,
@@ -89,8 +89,46 @@ cdef extern from "dijkstra3d.hpp" namespace "dijkstra":
   )
   cdef vector[T] query_shortest_path[T](
     T* parents, T target
-  ) 
-  
+  )
+  cdef uint32_t compute_connectivity_relationship(
+    int x1, int y1, int z1, int x2, int y2, int z2, int connectivity
+  )
+  cdef void compute_neighborhood(
+  int *neighborhood, int x, int y, int z, uint64_t sx, uint64_t sy, uint64_t sz, int connectivity, uint32_t* voxel_connectivity_graph
+  )
+
+def compute_connectivity(x1, y1, z1, x2, y2, z2, connectivity=26):
+  """
+  Compute connectivity bitfield as specified in
+  https://github.com/seung-lab/connected-components-3d/blob/3.2.0/cc3d_graphs.hpp#L73-L92
+  for the two points (x1, y1, z1) and (x2, y2, z2)
+  """
+  return compute_connectivity_relationship(x1, y1, z1, x2, y2, z2, connectivity)
+
+def compute_neighbors(x, y, z, sx, sy, sz, connectivity=26, voxel_graph=None):
+  """
+  Compute list of neighbors as flat indices (relative to x,y,z) based on the voxel_graph
+  at location (x, y, z) for an image of size (sx, sy, sz)
+  """
+  # Prepare output buffer
+  neighborhood = np.zeros(shape=(26,), dtype=np.intc)
+  cdef int[:] neighborhood_memview
+  cdef int* neighborhood_ptr = NULL
+
+  neighborhood_memview = neighborhood
+  neighborhood_ptr = <int*>&neighborhood_memview[0]
+
+  # Convert python object to C pointer
+  voxel_graph = format_voxel_graph(voxel_graph)
+  cdef uint32_t[:,:,:] voxel_graph_memview
+  cdef uint32_t* voxel_graph_ptr = NULL
+  if voxel_graph is not None:
+    voxel_graph_memview = voxel_graph
+    voxel_graph_ptr = <uint32_t*>&voxel_graph_memview[0,0,0]
+
+  compute_neighborhood(neighborhood_ptr, x, y, z, sx, sy, sz, connectivity, voxel_graph_ptr)
+  return neighborhood
+
 def format_voxel_graph(voxel_graph):
   while voxel_graph.ndim < 3:
     voxel_graph = voxel_graph[..., np.newaxis]
@@ -99,6 +137,7 @@ def format_voxel_graph(voxel_graph):
     voxel_graph = voxel_graph.astype(np.uint32, order="F")
   
   return np.asfortranarray(voxel_graph)
+
 
 def dijkstra(
   data, source, target, 
@@ -294,7 +333,7 @@ def path_from_parents(parents, target):
   ptlist = _path_to_point_cloud(numpy_path, 3, sy, sx)
   return ptlist[:, :ndim]
 
-def parental_field(data, source, connectivity=26, voxel_graph=None):
+def parental_field(data, source, connectivity=26, voxel_graph=None, children=None):
   """
   Use dijkstra's shortest path algorithm
   on a 3D image grid to generate field of
@@ -344,11 +383,15 @@ def parental_field(data, source, connectivity=26, voxel_graph=None):
   if voxel_graph is not None:
     voxel_graph = format_voxel_graph(voxel_graph)
 
+  if children is not None:
+    assert data.size == children.size
+    children = format_voxel_graph(children)
+
   _validate_coord(data, source)
 
   data = np.asfortranarray(data)
 
-  field = _execute_parental_field(data, source, connectivity, voxel_graph)
+  field = _execute_parental_field(data, source, connectivity, voxel_graph, children)
   if dims < 3:
     field = np.squeeze(field, axis=2)
   if dims < 2:
@@ -895,7 +938,7 @@ def _execute_distance_field(data, sources, connectivity, voxel_graph):
   # I don't actually understand why order F works, but it does.
   return np.frombuffer(buf, dtype=np.float32).reshape(data.shape, order='F')
 
-def _execute_parental_field(data, source, connectivity, voxel_graph):
+def _execute_parental_field(data, source, connectivity, voxel_graph, children):
   cdef uint8_t[:,:,:] arr_memview8
   cdef uint16_t[:,:,:] arr_memview16
   cdef uint32_t[:,:,:] arr_memview32
@@ -908,6 +951,12 @@ def _execute_parental_field(data, source, connectivity, voxel_graph):
   if voxel_graph is not None:
     voxel_graph_memview = voxel_graph
     voxel_graph_ptr = <uint32_t*>&voxel_graph_memview[0,0,0]
+
+  cdef uint32_t[:, :, :]  children_memview
+  cdef uint32_t * children_ptr = NULL
+  if children is not None:
+    children_memview = children
+    children_ptr = <uint32_t*>&children_memview[0,0,0]
 
   cdef size_t sx = data.shape[0]
   cdef size_t sy = data.shape[1]
@@ -935,7 +984,8 @@ def _execute_parental_field(data, source, connectivity, voxel_graph):
         sx, sy, sz,
         src, &parents64[0,0,0],
         connectivity,
-        voxel_graph_ptr
+        voxel_graph_ptr,
+        children_ptr
       )
     else:
       parental_field3d[float,uint32_t](
@@ -943,7 +993,8 @@ def _execute_parental_field(data, source, connectivity, voxel_graph):
         sx, sy, sz,
         src, &parents32[0,0,0],
         connectivity,
-        voxel_graph_ptr
+        voxel_graph_ptr,
+        children_ptr
       )
   elif dtype == np.float64:
     arr_memviewdouble = data
@@ -953,7 +1004,8 @@ def _execute_parental_field(data, source, connectivity, voxel_graph):
         sx, sy, sz,
         src, &parents64[0,0,0],
         connectivity,
-        voxel_graph_ptr
+        voxel_graph_ptr,
+        children_ptr
       )
     else:
       parental_field3d[double,uint32_t](
@@ -961,7 +1013,8 @@ def _execute_parental_field(data, source, connectivity, voxel_graph):
         sx, sy, sz,
         src, &parents32[0,0,0],
         connectivity,
-        voxel_graph_ptr
+        voxel_graph_ptr,
+        children_ptr
       )
   elif dtype in (np.int64, np.uint64):
     arr_memview64 = data.astype(np.uint64)
@@ -971,7 +1024,8 @@ def _execute_parental_field(data, source, connectivity, voxel_graph):
         sx, sy, sz,
         src, &parents64[0,0,0],
         connectivity,
-        voxel_graph_ptr
+        voxel_graph_ptr,
+        children_ptr
       )
     else:
       parental_field3d[uint64_t,uint32_t](
@@ -979,7 +1033,8 @@ def _execute_parental_field(data, source, connectivity, voxel_graph):
         sx, sy, sz,
         src, &parents32[0,0,0],
         connectivity,
-        voxel_graph_ptr
+        voxel_graph_ptr,
+        children_ptr
       )
   elif dtype in (np.uint32, np.int32):
     arr_memview32 = data.astype(np.uint32)
@@ -989,7 +1044,8 @@ def _execute_parental_field(data, source, connectivity, voxel_graph):
         sx, sy, sz,
         src, &parents64[0,0,0],
         connectivity,
-        voxel_graph_ptr
+        voxel_graph_ptr,
+        children_ptr
       )
     else:
       parental_field3d[uint32_t,uint32_t](
@@ -997,7 +1053,8 @@ def _execute_parental_field(data, source, connectivity, voxel_graph):
         sx, sy, sz,
         src, &parents32[0,0,0],
         connectivity,
-        voxel_graph_ptr
+        voxel_graph_ptr,
+        children_ptr
       )
   elif dtype in (np.int16, np.uint16):
     arr_memview16 = data.astype(np.uint16)
@@ -1007,7 +1064,8 @@ def _execute_parental_field(data, source, connectivity, voxel_graph):
         sx, sy, sz,
         src, &parents64[0,0,0],
         connectivity,
-        voxel_graph_ptr
+        voxel_graph_ptr,
+        children_ptr
       )
     else:
       parental_field3d[uint16_t,uint32_t](
@@ -1015,7 +1073,8 @@ def _execute_parental_field(data, source, connectivity, voxel_graph):
         sx, sy, sz,
         src, &parents32[0,0,0],
         connectivity,
-        voxel_graph_ptr
+        voxel_graph_ptr,
+        children_ptr
       )
   elif dtype in (np.int8, np.uint8, bool):
     arr_memview8 = data.astype(np.uint8)
@@ -1025,7 +1084,8 @@ def _execute_parental_field(data, source, connectivity, voxel_graph):
         sx, sy, sz,
         src, &parents64[0,0,0],
         connectivity,
-        voxel_graph_ptr
+        voxel_graph_ptr,
+        children_ptr
       )
     else:
       parental_field3d[uint8_t,uint32_t](
@@ -1033,7 +1093,8 @@ def _execute_parental_field(data, source, connectivity, voxel_graph):
         sx, sy, sz,
         src, &parents32[0,0,0],
         connectivity,
-        voxel_graph_ptr
+        voxel_graph_ptr,
+        children_ptr
       )
   else:
     raise TypeError("Type {} not currently supported.".format(dtype))
